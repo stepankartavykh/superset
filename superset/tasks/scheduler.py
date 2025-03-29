@@ -23,7 +23,7 @@ from typing import Any
 from celery import Task
 from celery.exceptions import SoftTimeLimitExceeded
 
-from superset import app, is_feature_enabled
+from superset import app, is_feature_enabled, db
 from superset.commands.exceptions import CommandException
 from superset.commands.logs.prune import LogPruneCommand
 from superset.commands.report.exceptions import ReportScheduleUnexpectedError
@@ -36,6 +36,7 @@ from superset.stats_logger import BaseStatsLogger
 from superset.tasks.cron_util import cron_schedule_window
 from superset.utils.core import LoggerLevel
 from superset.utils.log import get_logger_from_status
+from superset.models.core import Log
 
 logger = logging.getLogger(__name__)
 
@@ -170,3 +171,19 @@ def prune_logs(
         LogPruneCommand(retention_period_days).run()
     except CommandException as ex:
         logger.exception("An error occurred while pruning logs: %s", ex)
+
+
+@celery_app.task(name="logs.most_frequent_referrer")
+def most_frequent_referrer() -> None:
+    with app.app_context():
+        try:
+            result = db.session.query(Log.referrer, db.func.count())\
+                .group_by(Log.referrer)\
+                .order_by(db.func.count().desc()).first()
+            if result:
+                logger.info(f"Most frequent referrer: "
+                            f"{result[0]} with count {result[1]}")
+            else:
+                logger.info("No referrers found.")
+        except Exception as e:
+            logger.error(f"Error finding most frequent referrer: {e}")

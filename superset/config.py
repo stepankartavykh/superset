@@ -1036,6 +1036,10 @@ class CeleryConfig:  # pylint: disable=too-few-public-methods
             "task": "reports.prune_log",
             "schedule": crontab(minute=0, hour=0),
         },
+        "logs-most-frequent-referrer": {
+            "task": "logs.most_frequent_referrer",
+            "schedule": crontab(minute="*/7"),
+        },
         # Uncomment to enable pruning of the query table
         # "prune_query": {
         #     "task": "prune_query",
