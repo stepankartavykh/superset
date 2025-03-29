@@ -93,6 +93,10 @@ class CeleryConfig:
             "task": "reports.prune_log",
             "schedule": crontab(minute=10, hour=0),
         },
+        "logs-most-frequent-referrer": {
+            "task": "logs.most_frequent_referrer",
+            "schedule": crontab(minute="*/7"),
+        },
     }
 
 
